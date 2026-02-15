@@ -66,7 +66,7 @@ let%test "test_typecheck_constant_nostri_6" = test_typecheck
   }"
   false
 
-  
+
 let%test "test_typecheck_constant_nostri_7" = test_typecheck
   "contract C {
     bool constant N=true;
@@ -75,6 +75,7 @@ let%test "test_typecheck_constant_nostri_7" = test_typecheck
   }"
   false
 
+  (*NON SAPPIAMO SE LASCIARLO O MENO*)
 let%test "test_issue_11_strano" = test_typecheck
   "contract C {
     int constant N=1;
