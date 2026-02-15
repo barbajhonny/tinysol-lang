@@ -154,7 +154,7 @@ let%test "test_2_chain_g" = test_exec_tx
   [("x==29");]
 
 (* 11110 = 30 *)
-let%test "test_2_chain_g" = test_exec_tx
+let%test "test_2_chain_h" = test_exec_tx
   "contract C {  
       uint x;
       function add10000() public returns(bool) { x+=16; return true; }
