@@ -12,6 +12,7 @@ let%test "test_2_or_a" = test_exec_tx
   ["0xA:0xC.f()"] 
   [("x==1");]
 
+
 (* g viene eseguita, x diventa 10, f va nel branch true, x diventa 11 *)
 let%test "test_2_or_b" = test_exec_tx
   "contract C {  
@@ -22,6 +23,7 @@ let%test "test_2_or_b" = test_exec_tx
   ["0xA:0xC.f()"] 
   [("x==11");]
 
+
 (* g viene eseguita, x diventa 10, f va nel branch false, x diventa 12 *)
 let%test "test_2_or_c" = test_exec_tx
   "contract C {  
@@ -31,6 +33,7 @@ let%test "test_2_or_c" = test_exec_tx
   }"
   ["0xA:0xC.f()"] 
   [("x==12");]
+
 
   let%test "or_primo_true" = test_exec_tx
   "contract C {
@@ -65,6 +68,7 @@ let%test "test_2_or_c" = test_exec_tx
   ["0xA:0xC.f()"]
   ["x==2"; "y==1"]  (* y DEVE essere 0 perché g() NON deve essere chiamata *)
 
+
 (* === AND === *)
 
 (* g non viene eseguita, f va nel branch false, x diventa 2 *)
@@ -77,6 +81,7 @@ let%test "test_2_and_a" = test_exec_tx
   ["0xA:0xC.f()"] 
   [("x==2");]
 
+
 (* g viene eseguita, x diventa 10, f va nel branch false, x diventa 12 *)
 let%test "test_2_and_b" = test_exec_tx
   "contract C {  
@@ -87,6 +92,7 @@ let%test "test_2_and_b" = test_exec_tx
   ["0xA:0xC.f()"] 
   [("x==12");]
 
+
 (* g viene eseguita, x diventa 10, f va nel branch true, x diventa 11 *)
 let%test "test_2_and_c" = test_exec_tx
   "contract C {  
@@ -96,6 +102,7 @@ let%test "test_2_and_c" = test_exec_tx
   }"
   ["0xA:0xC.f()"] 
   [("x==11");]
+
 
 let%test "and_primo_false" = test_exec_tx
   "contract C {
@@ -133,7 +140,7 @@ let%test "and_primo_false" = test_exec_tx
 (* === CONCATENATI === *)
 (* Le potenze di 2 sono primi additivi, quindi ciascuna somma si può ottenere solo con una combinazione di addendi *)
 
-(* Viene eseguito il primo metodo, l'espressione è true, il risultato è 16+2 = 8, cioè 10010 *)
+(* Viene eseguito il primo metodo, l'espressione è true, il risultato è 16+2 = 18, cioè 10010 *)
 let%test "test_2_chain_a" = test_exec_tx
   "contract C {  
       uint x;
