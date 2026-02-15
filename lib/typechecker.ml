@@ -390,6 +390,15 @@ let is_immutable (x : ide) (vdl : var_decl list) =
 let is_constant (x : ide) (vdl : var_decl list) = 
   List.fold_left (fun acc (vd : var_decl) -> acc || (vd.name=x && vd.mutability==Constant)) false vdl
 
+(* Se è costante e non è stata inizializzata dà errore *)
+(* Il fold left si usa per scorrere la lista di variabili e cercare quella con quel nome *)
+let check_constants_init vdl =
+  List.fold_left (fun acc vd ->
+    if vd.mutability = Constant && vd.init_value = None then
+      acc >> Error [ConstantError ("declaration", vd.name)]
+    else acc
+  ) (Ok ()) vdl
+
 let typecheck_local_decls (f : ide) (vdl : local_var_decl list) = List.fold_left
   (fun acc vd -> match vd.ty with 
     | MapT(_) -> acc >> Error [MapInLocalDecl (f,vd.name)]
@@ -515,6 +524,8 @@ let typecheck_contract (Contract(_,edl,vdl,fdl)) : typecheck_result =
   >>
   (* no multiply declared functions *)
   no_dup_fun_decls fdl
+  >>
+  check_constants_init vdl
   >>
   List.fold_left (fun acc fd -> acc >> typecheck_fun edl vdl fd) (Ok ()) fdl  
 
