@@ -17,6 +17,14 @@ let%test "test_typecheck_constant_nostri_2" = test_typecheck
   }"
   true
 
+let%test "test_typecheck_constant_nostri_2a" = test_typecheck
+  "contract C {
+    int constant N=1;
+    constructor() {} 
+    function f(int n) external { N = 2+3;}
+  }"
+  false
+
 (* altro tipo di assegnazione *)
 let%test "test_typecheck_constant_nostri_3" = test_typecheck
   "contract C {
