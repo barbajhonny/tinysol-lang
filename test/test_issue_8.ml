@@ -67,11 +67,10 @@ let%test "test_typecheck_constant_nostri_7" = test_typecheck
   }"
   false
 
-  (* TODO: non funzionano (più?) gli immutable *)
-let%test "test_typecheck_constant_nostri_immutable" = test_typecheck
+let%test "test_issue_11_strano" = test_typecheck
   "contract C {
-    int immutable N;
-    constructor() {} 
-    function f(int n) external {N = 3;}
+    int constant N=1;
+    int x;
+    function f(int n) external { if (n>0) x+=1; else N=0; }
   }"
-  true
+  false
