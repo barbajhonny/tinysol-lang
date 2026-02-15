@@ -32,6 +32,39 @@ let%test "test_2_or_c" = test_exec_tx
   ["0xA:0xC.f()"] 
   [("x==12");]
 
+  let%test "or_primo_true" = test_exec_tx
+  "contract C {
+      uint x;
+      uint y;
+      function f() public { 
+          x = 1;  // primo termine sarà true (x==1)
+          if (x==1 || this.g()==5) { x = x + 1; }
+      }
+      function g() public returns(uint) { 
+          y = y + 1;  // contatore chiamate
+          return 5; 
+      }
+  }"
+  ["0xA:0xC.f()"]
+  ["x==2"; "y==0"]  (* y DEVE essere 0 perché g() NON deve essere chiamata *)
+
+
+  let%test "or_primo_false" = test_exec_tx
+  "contract C {
+      uint x;
+      uint y;
+      function f() public { 
+          x = 1;  // primo termine sarà true (x==1)
+          if (x==2 || this.g()==5) { x = x + 1; }
+      }
+      function g() public returns(uint) { 
+          y = y + 1;  // contatore chiamate
+          return 5; 
+      }
+  }"
+  ["0xA:0xC.f()"]
+  ["x==2"; "y==1"]  (* y DEVE essere 0 perché g() NON deve essere chiamata *)
+
 (* === AND === *)
 
 (* g non viene eseguita, f va nel branch false, x diventa 2 *)
@@ -63,6 +96,39 @@ let%test "test_2_and_c" = test_exec_tx
   }"
   ["0xA:0xC.f()"] 
   [("x==11");]
+
+let%test "and_primo_false" = test_exec_tx
+  "contract C {
+      uint x;
+      uint y;
+      function f() public { 
+          x = 1;  // primo termine sarà false (x==1)
+          if (x==3 && this.g()==5) { x = x + 1; }
+      }
+      function g() public returns(uint) { 
+          y = y + 1;  // contatore chiamate
+          return 5; 
+      }
+  }"
+  ["0xA:0xC.f()"]
+  ["x==1"; "y==0"]  (* y DEVE essere 0 perché g() non viene chiamata *)
+
+
+  let%test "and_primo_true" = test_exec_tx
+  "contract C {
+      uint x;
+      uint y;
+      function f() public { 
+          x = 1;  // primo termine sarà true (x==1)
+          if (x==1 && this.g()==5) { x = x + 1; } //(x = 1+1)
+      }
+      function g() public returns(uint) { 
+          y = y + 1;  // contatore chiamate
+          return 5; 
+      }
+  }"
+  ["0xA:0xC.f()"]
+  ["x==2"; "y==1"]  (* y DEVE essere 1 perché g() viene richiamata 1 volta *)
 
 (* === CONCATENATI === *)
 (* Le potenze di 2 sono primi additivi, quindi ciascuna somma si può ottenere solo con una combinazione di addendi *)
