@@ -276,6 +276,11 @@ let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
     |Ok(IntConstET n1), Ok(IntConstET n2) -> 
       if n2<>0 then Ok (IntConstET (n1/n2)) else Error[TypeError(f,e2,IntConstET n2,IntET)]
 
+    (*Quando ho una variabile al primo membro controllo direttamente che il denominatore sia = 0
+      se è uguale sollevo un' eccezzione *)
+    | Ok(_), Ok(IntConstET 0) -> 
+        Error [TypeError(f, e2, IntConstET 0, IntET)]
+
     |Ok(t1),Ok(t2) when subtype t1 UintET && subtype t2 UintET -> Ok(UintET)
     |Ok(t1),Ok(t2) when subtype t1 IntET && subtype t2 IntET -> Ok(IntET)
     |Ok(t1),_ when not (subtype t1 IntET) -> Error [TypeError (f,e1,t1,IntET)]
