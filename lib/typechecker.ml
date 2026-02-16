@@ -67,6 +67,7 @@ let typeckeck_result_from_expr_result (out : typecheck_expr_result) : typecheck_
 exception TypeError of ide * expr * exprtype * exprtype
 exception NotMapError of ide * expr
 exception ImmutabilityError of ide * ide
+exception ConstantError of ide * ide
 exception UndeclaredVar of ide * ide
 exception MultipleDecl of ide
 exception MultipleLocalDecl of ide * ide
@@ -87,6 +88,7 @@ let string_of_typecheck_error = function
     " but is expected to have type " ^ string_of_exprtype t2
 | NotMapError (f,e) -> logfun f (string_of_expr e) ^ " is not a mapping"
 | ImmutabilityError (f,x) -> logfun f "variable " ^ x ^ " was declared as immutable, but is used as mutable"
+| ConstantError (f,x) -> logfun f "variable " ^ x ^ " was declared as constant, but is used as mutable"
 | UndeclaredVar (f,x) -> logfun f "variable " ^ x ^ " is not declared"
 | MultipleDecl x -> "variable " ^ x ^ " is declared multiple times"
 | MultipleLocalDecl (f,x) -> logfun f "variable " ^ x ^ " is declared multiple times"
@@ -385,6 +387,18 @@ let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
 let is_immutable (x : ide) (vdl : var_decl list) = 
   List.fold_left (fun acc (vd : var_decl) -> acc || (vd.name=x && vd.mutability<>Mutable)) false vdl
 
+let is_constant (x : ide) (vdl : var_decl list) = 
+  List.fold_left (fun acc (vd : var_decl) -> acc || (vd.name=x && vd.mutability==Constant)) false vdl
+
+(* Se è costante e non è stata inizializzata dà errore *)
+(* Il fold left si usa per scorrere la lista di variabili e cercare quella con quel nome *)
+let check_constants_init vdl =
+  List.fold_left (fun acc vd ->
+    if vd.mutability = Constant && vd.init_value = None then
+      acc >> Error [ConstantError ("declaration", vd.name)]
+    else acc
+  ) (Ok ()) vdl
+
 let typecheck_local_decls (f : ide) (vdl : local_var_decl list) = List.fold_left
   (fun acc vd -> match vd.ty with 
     | MapT(_) -> acc >> Error [MapInLocalDecl (f,vd.name)]
@@ -397,7 +411,8 @@ let rec typecheck_cmd (f : ide) (edl : enum_decl list) (vdl : all_var_decls) = f
 
     | Assign(x,e) -> 
         (* the immutable modifier is not checked for the constructor *)
-        if f <> "constructor" && is_immutable x (get_state_var_decls vdl) then Error [ImmutabilityError (f,x)]
+        if is_constant x (get_state_var_decls vdl) then Error [ConstantError (f,x)]
+        else if f <> "constructor" && is_immutable x (get_state_var_decls vdl) then Error [ImmutabilityError (f,x)]
         else (
           match typecheck_expr f edl vdl e,typecheck_expr f edl vdl (Var x) with
           | Ok(te),Ok(tx) -> if subtype te tx then Ok() else Error [TypeError (f,e,te,tx)]
@@ -509,6 +524,8 @@ let typecheck_contract (Contract(_,edl,vdl,fdl)) : typecheck_result =
   >>
   (* no multiply declared functions *)
   no_dup_fun_decls fdl
+  >>
+  check_constants_init vdl
   >>
   List.fold_left (fun acc fd -> acc >> typecheck_fun edl vdl fd) (Ok ()) fdl  
 
