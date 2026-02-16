@@ -10,6 +10,9 @@ open Utils
 exception TypeError of string
 exception NoRuleApplies
 
+let rec gcd a b = if b = 0 then a else gcd b (a mod b);;
+
+
 let rec step_expr (e,st) = match e with
   | e when is_val e -> raise NoRuleApplies
 
@@ -86,6 +89,14 @@ let rec step_expr (e,st) = match e with
   | Sub(e1,e2) -> 
     let (e1', st') = step_expr (e1, st) in (Sub(e1',e2), st')
 
+    (* Gestisce anche la moltiplicazione con le frazioni *)
+| Mul(IntVal n1, Div(IntVal n, IntVal d))
+| Mul(Div(IntVal n, IntVal d), IntVal n1) ->
+    let g = gcd (n1 * n) d in
+    let n' = (n1 * n)  and d' = d / g in
+    if d' = 1 then (IntVal n', st)
+    else (Div(IntVal n', IntVal d'), st)
+
   | Mul(e1,e2) when is_val e1 && is_val e2 -> (match e1,e2 with
     | (IntConst n1, IntConst n2) -> (IntConst (n1*n2), st)
     | (IntConst n1, UintVal n2) when n1>=0 -> (UintVal (n1*n2), st)
@@ -99,6 +110,22 @@ let rec step_expr (e,st) = match e with
     let (e2', st') = step_expr (e2, st) in (Mul(e1,e2'), st')
   | Mul(e1,e2) -> 
     let (e1', st') = step_expr (e1, st) in (Mul(e1',e2), st')
+
+
+    (*-------------------------------------------------*)
+(* Riduce le frazioni in minimi termini e controlla la divisione per 0 *)
+| Div(e1,e2) when is_val e1 && is_val e2 ->
+  (match e1,e2 with
+   | IntVal _, IntVal d when d = 0 -> raise (TypeError "division by zero")
+   | IntVal n, IntVal d ->
+       let g = gcd n d in
+       let n' = n / g and d' = d / g in
+       if d' = 1 then (IntVal n', st)
+       else (Div(IntVal n', IntVal d'), st)
+   | _ -> raise (TypeError "Div: type mismatch"))
+
+
+    (*--------------------------------------------------------*)
 
   | Eq(e1,e2) when is_val e1 && is_val e2 -> (match e1,e2 with
       | (IntConst n1,IntConst n2)
