@@ -345,6 +345,14 @@ let%test "test_mul_div_mix_b_strano_negativo" = test_exec_tx
   }"
   ["0xA:0xC.f()"]
   [("x==-4");]
+(* Però con le parentesi funziona. Va bene? *)
+let%test "test_mul_div_mix_b_strano_negativo" = test_exec_tx
+  "contract C {
+    int x=1;
+    function f() public returns(int) { x = 7*((-2)/3); }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==-4");]
 
 (* Questo è unparsable??? Boh. test_mul_div_mix_b_strano_negativo_variabile threw (Failure "account 0xC unbound"). *)
 (*let%test "test_mul_div_mix_b_strano_negativo_variabile" = test_exec_tx
