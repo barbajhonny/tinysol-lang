@@ -143,7 +143,7 @@ let%test "test_mul_div_mix" = test_exec_tx
   ["0xA:0xC.f()"]
   [("x==3");]
 
-(* Espressione che dovrebbe essere semplificata *)
+
 let%test "test_div_mul_mix" = test_exec_tx
   "contract C {
     int x=1;
@@ -151,3 +151,32 @@ let%test "test_div_mul_mix" = test_exec_tx
   }"
   ["0xA:0xC.f()"]
   [("x==3");]
+
+
+let%test "test_mul_div_mix_a" = test_exec_tx
+  "contract C {
+    int x=1;
+    function f() public returns(int) { x = 9*(2/3); }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==6");]
+
+(* Per ora questo test non funziona, una divisione che non viene semplificata
+   a un numero intero non viene neanche arrotondata al momento dell'assegnazione,
+   che quindi viene bloccata *)
+let%test "test_mul_div_mix_b" = test_exec_tx
+  "contract C {
+    int x=1;
+    function f() public returns(int) { x = 7*(2/3); }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==4");]
+
+(* Questa invece funziona. Forse risolvere quella sopra romperebbe questa *)
+let%test "test_mul_div_mix_c" = test_exec_tx
+  "contract C {
+    int x=1;
+    function f() public returns(int) { x = 7*(2/3)*3; }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==14");]
