@@ -187,6 +187,30 @@ let subtype t0 t1 = match t1 with
   | AddrET _ -> (match t0 with AddrET _ -> true | _ -> false)
   | _ -> t0 = t1
 
+
+
+
+  (* Prova a ridurre un'espressione a una frazione (numeratore, denominatore) *)
+let rec eval_const = function
+  | IntConst n -> Some (n, 1)
+  | Mul(e1, e2) -> 
+      (match eval_const e1, eval_const e2 with
+       | Some (n1, d1), Some (n2, d2) -> Some (n1 * n2, d1 * d2)
+       | _ -> None)
+  | Div(e1, e2) ->
+      (match eval_const e1, eval_const e2 with
+       | Some (n1, d1), Some (n2, d2) when n2 <> 0 -> Some (n1 * d2, d1 * n2)
+       | _ -> None)
+  | Add(e1, e2) -> (* opzionale, per completezza *)
+      (match eval_const e1, eval_const e2 with
+       | Some (n1, d1), Some (n2, d2) -> Some (n1 * d2 + n2 * d1, d1 * d2)
+       | _ -> None)
+  | _ -> None
+
+
+  
+
+
 let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
   | BoolConst b -> Ok (BoolConstET b)
 
@@ -257,36 +281,38 @@ let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
      | _,Ok(t2) -> Error [TypeError (f,e2,t2,IntET)]
      | err1,err2 -> err1 >>+ err2)
 
-  | Mul(e1,e2) ->
-    (match (typecheck_expr f edl vdl e1,typecheck_expr f edl vdl e2) with
-     | Ok(IntConstET n1),Ok(IntConstET n2) -> Ok(IntConstET (n1*n2))
-     | Ok(t1),Ok(t2) when subtype t1 UintET && subtype t2 UintET -> Ok(UintET)
-     | Ok(t1),Ok(t2) when subtype t1 IntET && subtype t2 IntET -> Ok(IntET)
-     | Ok(t1),_ when not (subtype t1 IntET) -> Error [TypeError (f,e1,t1,IntET)]
-     | _,Ok(t2) -> Error [TypeError (f,e2,t2,IntET)]
-     | err1,err2 -> err1 >>+ err2)
+  | Mul(e1, e2) ->
+      (match eval_const (Mul(e1, e2)) with
+       | Some (n, d) -> 
+           (* Se è una costante, riduciamo. Il controllo del resto n mod d 
+              lo facciamo solo nell'Assign, per ora diamo il valore intero *)
+           Ok (IntConstET (n / d))
+       | None -> 
+           (* Logica standard per variabili o espressioni non costanti *)
+           (match (typecheck_expr f edl vdl e1, typecheck_expr f edl vdl e2) with
+            | Ok(t1), Ok(t2) when subtype t1 UintET && subtype t2 UintET -> Ok(UintET)
+            | Ok(t1), Ok(t2) when subtype t1 IntET && subtype t2 IntET -> Ok(IntET)
+            | Ok(t1), _ when not (subtype t1 IntET) -> Error [TypeError (f, e1, t1, IntET)]
+            | _, Ok(t2) -> Error [TypeError (f, e2, t2, IntET)]
+            | err1, err2 -> err1 >>+ err2))
 
 
 
 (*RIPRENDO DA QUI:*)
-  | Div(e1,e2) ->
-    (match (typecheck_expr f edl vdl e1, typecheck_expr f edl vdl e2) with
-
-    (*Essendo IntConst posso controllare il valore, e quindi bloccare subito il caso in cui n2 valga 0*)
-    |Ok(IntConstET n1), Ok(IntConstET n2) -> 
-      if n2<>0 then Ok (IntConstET (n1/n2)) else Error[TypeError(f,e2,IntConstET n2,IntET)]
-
-    (*Quando ho una variabile al primo membro controllo direttamente che il denominatore sia = 0
-      se è uguale sollevo un' eccezzione *)
-    | Ok(_), Ok(IntConstET 0) -> 
-        Error [TypeError(f, e2, IntConstET 0, IntET)]
-
-    |Ok(t1),Ok(t2) when subtype t1 UintET && subtype t2 UintET -> Ok(UintET)
-    |Ok(t1),Ok(t2) when subtype t1 IntET && subtype t2 IntET -> Ok(IntET)
-    |Ok(t1),_ when not (subtype t1 IntET) -> Error [TypeError (f,e1,t1,IntET)]
-    | _,Ok(t2) -> Error [TypeError (f,e2,t2,IntET)]
-
-    | err1,err2 -> err1 >>+ err2)
+  | Div(e1, e2) ->
+      (match eval_const (Div(e1, e2)) with
+       | Some (n, d) -> 
+           if d = 0 then Error [TypeError(f, e2, IntConstET 0, IntET)]
+           else Ok (IntConstET (n / d))
+       | None -> 
+           (* Logica per variabili *)
+           (match (typecheck_expr f edl vdl e1, typecheck_expr f edl vdl e2) with
+            | Ok(_), Ok(IntConstET 0) -> Error [TypeError(f, e2, IntConstET 0, IntET)]
+            | Ok(t1), Ok(t2) when subtype t1 UintET && subtype t2 UintET -> Ok(UintET)
+            | Ok(t1), Ok(t2) when subtype t1 IntET && subtype t2 IntET -> Ok(IntET)
+            | Ok(t1), _ when not (subtype t1 IntET) -> Error [TypeError (f, e1, t1, IntET)]
+            | _, Ok(t2) -> Error [TypeError (f, e2, t2, IntET)]
+            | err1, err2 -> err1 >>+ err2))
   
 
 
@@ -437,15 +463,27 @@ let typecheck_local_decls (f : ide) (vdl : local_var_decl list) = List.fold_left
 let rec typecheck_cmd (f : ide) (edl : enum_decl list) (vdl : all_var_decls) = function 
     | Skip -> Ok ()
 
-    | Assign(x,e) -> 
-        (* the immutable modifier is not checked for the constructor *)
-        if is_constant x (get_state_var_decls vdl) then Error [ConstantError (f,x)]
-        else if f <> "constructor" && is_immutable x (get_state_var_decls vdl) then Error [ImmutabilityError (f,x)]
-        else (
-          match typecheck_expr f edl vdl e,typecheck_expr f edl vdl (Var x) with
-          | Ok(te),Ok(tx) -> if subtype te tx then Ok() else Error [TypeError (f,e,te,tx)]
-          | res1,res2 -> typeckeck_result_from_expr_result (res1 >>+ res2)
-        )
+   | Assign(x,e) -> 
+    if is_constant x (get_state_var_decls vdl) then Error [ConstantError (f,x)]
+      else if f <> "constructor" && is_immutable x (get_state_var_decls vdl) then Error [ImmutabilityError (f,x)]
+    else (
+      match eval_const e, typecheck_expr f edl vdl (Var x) with
+      (* Caso 1: L'espressione è una costante e la variabile x esiste *)
+      | Some(n, d), Ok(tx) -> 
+          if n mod d <> 0 then 
+            Error [TypeError (f, e, IntET, tx)] 
+          else if subtype (IntConstET (n/d)) tx then Ok() 
+          else Error [TypeError (f, e, IntConstET (n/d), tx)]
+
+      (* Caso 2: L'espressione è costante ma la variabile x non esiste o ha errori *)
+      | Some(_), Error errs -> Error errs
+
+      (* Caso 3: L'espressione non è costante (None), procediamo col typecheck standard *)
+      | None, _ -> 
+          match typecheck_expr f edl vdl e, typecheck_expr f edl vdl (Var x) with
+          | Ok(te), Ok(tx) -> if subtype te tx then Ok() else Error [TypeError (f,e,te,tx)]
+          | res1, res2 -> typeckeck_result_from_expr_result (res1 >>+ res2)
+    )
 
     | Decons(_) -> failwith "TODO: multiple return values"
 
