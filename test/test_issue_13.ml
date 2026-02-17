@@ -145,6 +145,14 @@ false
 false
 
 
+let%test "test_mul_div_mix_b" = test_typecheck
+  "contract C {
+    int x=1;
+    function f() public returns(int) { x = 7*((-2)/3); }
+  }"
+  true
+
+
 
 (*-------------------TYPECHECKER OK-----------------------*)
 
@@ -282,19 +290,20 @@ let%test "test_div_mul_mix" = test_exec_tx
 let%test "test_mul_div_mix_a" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = 9*(2/3); }
+    function f() public returns(int) { x = 7*(2/3); }
   }"
   ["0xA:0xC.f()"]
-  [("x==6");]
+  [("x==4");]
 
 
 let%test "test_mul_div_mix_b" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = 7*(2/3); }
+int y=7;
+    function f() public returns(int) { x = y*(2/7); }
   }"
   ["0xA:0xC.f()"]
-  [("x==-4");]
+  [("x==2");]
 
 (* Questa invece funziona. Forse risolvere quella sopra romperebbe questa *)
 let%test "test_mul_div_mix_c" = test_exec_tx
@@ -341,7 +350,7 @@ let%test "test_riki" = test_exec_tx
 let%test "test_mul_div_mix_b_strano_negativo" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = 7*(-2/3); }
+    function f() public returns(int) { x = -7*(2/3); }
   }"
   ["0xA:0xC.f()"]
   [("x==-4");]

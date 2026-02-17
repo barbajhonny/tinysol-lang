@@ -97,6 +97,16 @@ let rec step_expr (e,st) = match e with
       if d' = 1 then (IntVal n', st)
       else (Div(IntVal n', IntVal d'), st)
 
+
+  |Mul(IntVal n1, Div(IntConst n, IntConst d))
+  | Mul(Div(IntConst n, IntConst d), IntVal n1) ->
+    let g = gcd (n1 * n) d in
+    let n' = (n1 * n) / g  and d' = d / g in
+    if d' = 1 then (IntVal n', st)
+    else (Div(IntVal n', IntVal d'), st)
+
+
+    
   | Mul(IntConst n1, Div(IntConst n, IntConst d))
   | Mul(Div(IntConst n, IntConst d), IntConst n1) ->
       let g = gcd (n1 * n) d in
