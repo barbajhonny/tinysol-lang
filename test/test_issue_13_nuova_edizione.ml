@@ -20,7 +20,7 @@ let%test "test_div_ok_good_result" = test_exec_tx
     int x=111;
     int y = 2;
     int z= 4;
-    function f() public returns(int) { x = 2*(5/2); }
+    function f() public returns(int) { x = 2*(5/4)*2; }
   }"
   ["0xA:0xC.f()"]
   [("x==5");]
