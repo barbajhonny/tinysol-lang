@@ -119,8 +119,6 @@ let rec step_expr (e,st) = match e with
     let (e1', st') = step_expr (e1, st) in (Mul(e1',e2), st')
 
 
-    (*-------------------------------------------------*)
-(* Riduce le frazioni in minimi termini e controlla la divisione per 0 *)
 | Div(e1,e2) when is_val e1 && is_val e2 -> (match e1,e2 with
     | (IntConst n1, IntConst n2) -> (IntConst (n1/n2), st)
     | (IntConst n1, UintVal n2) when n1>=0 -> (UintVal (n1/n2), st)
