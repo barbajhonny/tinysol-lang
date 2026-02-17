@@ -121,24 +121,15 @@ let rec step_expr (e,st) = match e with
 
     (*-------------------------------------------------*)
 (* Riduce le frazioni in minimi termini e controlla la divisione per 0 *)
-| Div(e1,e2) when is_val e1 && is_val e2 ->
-  (match e1,e2 with
-   | IntVal _, IntVal d when d = 0 -> raise (TypeError "division by zero")
-   | IntVal n, IntVal d when d <> 0->
-       let g = gcd n d in
-       let n' = n / g and d' = d / g in
-       if d' = 1 then (IntVal n', st)
-       else (Div(IntVal n', IntVal d'), st)
-
-    | IntConst _, IntConst d when d = 0 -> raise (TypeError "division by zero")
-   | IntConst n, IntConst d when d <> 0->
-       let g = gcd n d in
-       let n' = n / g and d' = d / g in
-       if d' = 1 then (IntConst n', st)
-       else (Div(IntConst n', IntConst d'), st)
-
-   | _ -> raise (TypeError "Div: type mismatch"))
-
+| Div(e1,e2) when is_val e1 && is_val e2 -> (match e1,e2 with
+    | (IntConst n1, IntConst n2) -> (IntConst (n1/n2), st)
+    | (IntConst n1, UintVal n2) when n1>=0 -> (UintVal (n1/n2), st)
+    | (UintVal n1, IntConst n2) when n2>=0 -> (UintVal (n1/n2), st)
+    | (IntConst n1, IntVal n2) -> (IntVal (n1/n2), st)
+    | (IntVal n1, IntConst n2) -> (IntVal (n1/n2), st)
+    | (UintVal n1, UintVal n2) -> (UintVal (n1/n2), st)
+    | (IntVal n1, IntVal n2) -> (IntVal (n1/n2), st)
+    | _ -> raise (TypeError "Div: type mismatch between the operands"))
    | Div(e1,e2) when is_val e1 ->
     let (e2', st') = step_expr (e2, st) in (Div(e1,e2'), st')
   | Div(e1,e2) -> 
