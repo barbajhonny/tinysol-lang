@@ -89,13 +89,20 @@ let rec step_expr (e,st) = match e with
   | Sub(e1,e2) -> 
     let (e1', st') = step_expr (e1, st) in (Sub(e1',e2), st')
 
-    (* Gestisce anche la moltiplicazione con le frazioni *)
-| Mul(IntVal n1, Div(IntVal n, IntVal d))
-| Mul(Div(IntVal n, IntVal d), IntVal n1) ->
-    let g = gcd (n1 * n) d in
-    let n' = (n1 * n) / g  and d' = d / g in
-    if d' = 1 then (IntVal n', st)
-    else (Div(IntVal n', IntVal d'), st)
+  (* Gestisce anche la moltiplicazione con le frazioni *)
+  | Mul(IntVal n1, Div(IntVal n, IntVal d))
+  | Mul(Div(IntVal n, IntVal d), IntVal n1) ->
+      let g = gcd (n1 * n) d in
+      let n' = (n1 * n) / g  and d' = d / g in
+      if d' = 1 then (IntVal n', st)
+      else (Div(IntVal n', IntVal d'), st)
+
+  | Mul(IntConst n1, Div(IntConst n, IntConst d))
+  | Mul(Div(IntConst n, IntConst d), IntConst n1) ->
+      let g = gcd (n1 * n) d in
+      let n' = (n1 * n) / g  and d' = d / g in
+      if d' = 1 then (IntConst n', st)
+      else (Div(IntConst n', IntConst d'), st)
 
   | Mul(e1,e2) when is_val e1 && is_val e2 -> (match e1,e2 with
     | (IntConst n1, IntConst n2) -> (IntConst (n1*n2), st)
@@ -112,27 +119,16 @@ let rec step_expr (e,st) = match e with
     let (e1', st') = step_expr (e1, st) in (Mul(e1',e2), st')
 
 
-    (*-------------------------------------------------*)
-(* Riduce le frazioni in minimi termini e controlla la divisione per 0 *)
-| Div(e1,e2) when is_val e1 && is_val e2 ->
-  (match e1,e2 with
-   | IntVal _, IntVal d when d = 0 -> raise (TypeError "division by zero")
-   | IntVal n, IntVal d when d <> 0->
-       let g = gcd n d in
-       let n' = n / g and d' = d / g in
-       if d' = 1 then (IntVal n', st)
-       else (Div(IntVal n', IntVal d'), st)
-
-    | IntConst _, IntConst d when d = 0 -> raise (TypeError "division by zero")
-   | IntConst n, IntConst d when d <> 0->
-       let g = gcd n d in
-       let n' = n / g and d' = d / g in
-       if d' = 1 then (IntConst n', st)
-       else (Div(IntConst n', IntConst d'), st)
-
-   | _ -> raise (TypeError "Div: type mismatch"))
-
-   | Div(e1,e2) when is_val e1 ->
+| Div(e1,e2) when is_val e1 && is_val e2 -> (match e1,e2 with
+    | (IntConst n1, IntConst n2) -> (IntConst (n1/n2), st)
+    | (IntConst n1, UintVal n2) when n1>=0 -> (UintVal (n1/n2), st)
+    | (UintVal n1, IntConst n2) when n2>=0 -> (UintVal (n1/n2), st)
+    | (IntConst n1, IntVal n2) -> (IntVal (n1/n2), st)
+    | (IntVal n1, IntConst n2) -> (IntVal (n1/n2), st)
+    | (UintVal n1, UintVal n2) -> (UintVal (n1/n2), st)
+    | (IntVal n1, IntVal n2) -> (IntVal (n1/n2), st)
+    | _ -> raise (TypeError "Div: type mismatch between the operands"))
+  | Div(e1,e2) when is_val e1 ->
     let (e2', st') = step_expr (e2, st) in (Div(e1,e2'), st')
   | Div(e1,e2) -> 
     let (e1', st') = step_expr (e1, st) in (Div(e1',e2), st')
@@ -239,7 +235,7 @@ let rec step_expr (e,st) = match e with
     | UintVal n  -> (IntVal n, st)
     | _ -> raise (TypeError "Cast of a non-integer expression"))
   | IntCast(e) -> 
-    let (e', st') = step_expr (e, st) in (IntCast(e'), st')    
+    let (e', st') = step_expr (e, st) in (IntCast(e'), st')
 
   | UintCast(e) when is_val e -> (match e with
     | IntConst n when n>=0 -> (IntConst n, st)
