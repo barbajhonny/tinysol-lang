@@ -17,8 +17,12 @@ let%test "test_constant_int_if_false" = test_typecheck
 }"
 false
 
-
-let%test "test_constant_int_if_false1" = test_typecheck
+let%test "test_constant_int_if_falseb" = test_typecheck
+"contract C {
+      int x;
+      function f(int y) public returns(int) { x = y* (2 / 3); }
+}"
+false
 
 (* Divisione per 0 con prodotto *)
 let%test "test_div_0_times" = test_typecheck
@@ -192,16 +196,6 @@ let%test "test_constant_int_if_false" = test_exec_tx
 
 let%test "test_constant_int_if_false" = test_exec_tx
    "contract C {
-      int x=1;
-      int y = 2;
-      function f() public returns(int) { x = y*(5/2); }
-}"
-["0xA:0xC.f()"]
-  [("x==5");]
-
-
-let%test "test_constant_int_if_false" = test_exec_tx
-   "contract C {
       int x;
       int y = 9;
       int z= 2;
@@ -312,3 +306,38 @@ let%test "test_mul_div_mix_c" = test_exec_tx
   }"
   ["0xA:0xC.f()"]
   [("x==14");]
+
+open Typechecker
+open Semantics
+
+(* Esempi della issue *)
+let%test "test_div_issue_true" = test_typecheck
+  "contract C {
+    int x;
+    function f(int y) public { x = y * ((1 / 3) * 6); }
+  }"
+true
+let%test "test_div_issue_false" = test_typecheck
+  "contract C {
+    int x;
+    function f(int y) public { x = y * (2 / 3); }
+  }"
+false
+
+let%test "test_div_ok_good_result" = test_exec_tx
+  "contract C {
+    int x=111;
+    int y = 2;
+    int z= 4;
+    function f() public returns(int) { x = 2*(5/4)*2; }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==5");]
+
+let%test "test_riki" = test_exec_tx
+  "contract C {
+  int x;
+  function f() public { x = (11/3)*11; }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==40");]

@@ -24,3 +24,11 @@ let%test "test_div_ok_good_result" = test_exec_tx
   }"
   ["0xA:0xC.f()"]
   [("x==5");]
+
+let%test "test_riki" = test_exec_tx
+  "contract C {
+  int x;
+  function f() public { x = (11/3)*11; }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==40");]

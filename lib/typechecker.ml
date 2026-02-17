@@ -302,8 +302,12 @@ let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
   | Div(e1, e2) ->
       (match eval_const (Div(e1, e2)) with
        | Some (n, d) -> 
-           if d = 0 then Error [TypeError(f, e2, IntConstET 0, IntET)]
-           else Ok (IntConstET (n / d))
+           if d = 0 then 
+             Error [TypeError(f, e2, IntConstET 0, IntET)]
+           else if n mod d <> 0 then 
+             Error [TypeError(f, Div(e1,e2), IntConstET (n/d), IntET)]
+           else 
+             Ok (IntConstET (n / d))
        | None -> 
            (* Logica per variabili *)
            (match (typecheck_expr f edl vdl e1, typecheck_expr f edl vdl e2) with
@@ -313,7 +317,6 @@ let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
             | Ok(t1), _ when not (subtype t1 IntET) -> Error [TypeError (f, e1, t1, IntET)]
             | _, Ok(t2) -> Error [TypeError (f, e2, t2, IntET)]
             | err1, err2 -> err1 >>+ err2))
-  
 
 
 
