@@ -10,6 +10,15 @@ let%test "test_div_ok" = test_typecheck
   }"
 true
 
+let%test "test_constant_int_if_false" = test_typecheck
+"contract C {
+      int x;
+      function f(int y) public returns(int) { x =  (2 / 3); }
+}"
+false
+
+
+let%test "test_constant_int_if_false1" = test_typecheck
 
 (* Divisione per 0 con prodotto *)
 let%test "test_div_0_times" = test_typecheck
@@ -69,6 +78,24 @@ let%test "test_div_ok_const_const" = test_typecheck
 true
 
 
+let%test "test_constant_int_if_true3" = test_typecheck
+  "contract C {
+      int x=2;
+      int y = 2;
+int z =2;
+      function f(int y) public returns(int) { x = z* (y/ x); }
+}"
+true
+
+
+  let%test "test_constant_int_if_true4" = test_typecheck
+   "contract C {
+      int x=5;
+      int y = 2;
+      int z= 4;
+      function f() public returns(int) { x = (4/2); }
+}"
+true
 (* ??? ma non esistono i float *)
 (*----------chiedere qua speigazion ?????????????????????*)
 (*let%test "test_div_???" = test_typecheck
@@ -92,6 +119,27 @@ let%test "test_div_bool" = test_typecheck
 false
 
 
+  (*segno meno,deve fallire il typechecker perchè provo ad assegnare ad un uint (senza segno)
+  delle costanti con segno*)
+  let%test "test_constant_int_if_false" = test_typecheck
+   "contract C {
+      uint x;
+    
+      function f() public returns(int) { x = (-10/2); }
+}"
+false
+
+  (*segno meno*)
+  let%test "test_constant_int_if_false" = test_typecheck
+   "contract C {
+      uint x;
+      int y=10;
+      int z=2;
+    
+      function f() public returns(int) { x = (-y/z); }
+}"
+false
+
 
 
 (*-------------------TYPECHECKER OK-----------------------*)
@@ -109,6 +157,90 @@ let%test "test_div_blocked_by_typechecker" = test_exec_tx
   }"
   ["0xA:0xC.f()"]
   [("x==1");]
+
+
+let%test "test_constant_int_if_false" = test_exec_tx
+   "contract C {
+      int x;
+      function f() public returns(int) { x = (-4/2); }
+}"
+["0xA:0xC.f()"]
+  [("x==-2");]
+
+
+ let%test "test_constant_int_if_false" = test_exec_tx
+   "contract C {
+      int x;
+      int y = 2;
+      int z= 4;
+      function f() public returns(int) { x = z*(y/z); }
+}"
+["0xA:0xC.f()"]
+  [("x==2");]
+
+
+  let%test "test_constant_int_if_false" = test_exec_tx
+   "contract C {
+      int x;
+      int y = 2;
+      int z= 4;
+      function f() public returns(int) { x = y*(z/4); }
+}"
+["0xA:0xC.f()"]
+  [("x==2");]
+
+
+let%test "test_constant_int_if_false" = test_exec_tx
+   "contract C {
+      int x=1;
+      int y = 2;
+      function f() public returns(int) { x = y*(5/2); }
+}"
+["0xA:0xC.f()"]
+  [("x==5");]
+
+
+let%test "test_constant_int_if_false" = test_exec_tx
+   "contract C {
+      int x;
+      int y = 9;
+      int z= 2;
+      function f() public returns(int) { x = -z*(y/z); }
+}"
+["0xA:0xC.f()"]
+  [("x==-9");]
+    
+(*segno meno*)
+  let%test "test_constant_int_if_false" = test_exec_tx
+   "contract C {
+      int x;
+      int y = 9;
+      int z= 2;
+      function f() public returns(int) { x = (-10/2); }
+}"
+["0xA:0xC.f()"]
+  [("x==-5");]
+
+
+
+   let%test "test_constant_int_if_false" = test_exec_tx
+   "contract C {
+      int x;
+      int y = 9;
+      int z= 2;
+      function f() public returns(int) { x = (-y*z); }
+}"
+["0xA:0xC.f()"]
+  [("x==-18");]
+
+ 
+
+    
+
+
+
+
+
 
 
 (* Divisione normale tra due variabili *)
