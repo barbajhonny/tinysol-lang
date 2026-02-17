@@ -1,76 +1,70 @@
 open Typechecker
 open Semantics
 
-let%test "test_constant_int_if_true" = test_typecheck
+(* Esempio dalla issue, dovrebbe essere permesso *)
+let%test "test_div_ok" = test_typecheck
   "contract C {
       int x;
       function f(int y) public returns(int) { x = y * ((1 / 3) * 6); }
 }"
 true
 
-let%test "test_constant_int_if_false1" = test_typecheck
+(* Divisione per 0 con prodotto *)
+let%test "test_div_0_times" = test_typecheck
   "contract C {
       int x;
       function f(int y) public returns(int) { x = 2 * ((1 / 0) * 6); }
 }"
 false
 
-let%test "test_constant_int_if_false2" = test_typecheck
+(* Divisione per 0 *)
+let%test "test_div_0" = test_typecheck
   "contract C {
       int x;
       function f(int y) public returns(int) { x = (1 / 0); }
 }"
 false
 
-let%test "test_constant_int_if_false3" = test_typecheck
-  "contract C {
-      int x;
-int y = 2;
-      function f(int y) public returns(int) { x = (y/ 0); }
-}"
-false
-
-
-let%test "test_constant_int_if_true2" = test_typecheck
+(* Divisione per 0 con una variabile *)
+let%test "test_div_0_var" = test_typecheck
   "contract C {
       int x;
       int y = 2;
-int z= 0;
+      function f(int y) public returns(int) { x = (y / 0); }
+}"
+false
+
+(* Divisione per 0 con due variabili *)
+let%test "test_div_0_var_var" = test_typecheck
+  "contract C {
+      int x;
+      int y = 2;
+      int z = 0;
       function f(int y) public returns(int) { x = (y/ z); }
 }"
 true
 
-
-let%test "test_constant_int_if_false4" = test_typecheck
+(* Divisione normale tra due variabili *)
+let%test "test_div_ok_var_var" = test_typecheck
   "contract C {
-      int x;
-      uint y = 2;
-      function f(int y) public returns(int) { x = (y/ 0); }
-}"
-false
-
-
-let%test "test_constant_int_if_true3" = test_typecheck
-  "contract C {
-      int x=2;
+      int x = 2;
       int y = 2;
-      function f(int y) public returns(int) { x = (y/ x); }
+      function f(int y) public returns(int) { x = (y/x); }
 }"
 true
 
 
-
-  let%test "test_constant_int_if_true4" = test_typecheck
+(* Divisione normale tra due costanti *)
+let%test "test_div_ok_const_const" = test_typecheck
    "contract C {
       int x=5;
-      int y = 2;
-      int z= 4;
       function f() public returns(int) { x = (4/2); }
 }"
 true
 
+(* ??? ma non esistono i float *)
 (*----------chiedere qua speigazion ?????????????????????*)
-  let%test "test_constant_int_if_true4" = test_typecheck
+  let%test "test_div_???" = test_typecheck
    "contract C {
       uint x= 5.98 * 100;
       int y = 2;
@@ -79,8 +73,8 @@ true
 }"
 true
 
-
-let%test "test_constant_int_if_true5" = test_typecheck
+(* Divisione con tipo non numerico *)
+let%test "test_div_bool" = test_typecheck
   "contract C {
       bool x;
       bool y = true;
