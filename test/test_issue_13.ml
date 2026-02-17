@@ -71,14 +71,14 @@ true
 
 (* ??? ma non esistono i float *)
 (*----------chiedere qua speigazion ?????????????????????*)
-let%test "test_div_???" = test_typecheck
+(*let%test "test_div_???" = test_typecheck
   "contract C {
     uint x= 5.98 * 100;
     int y = 2;
     int z= 4;
     function f() public returns(int) { y = x/z; }
   }"
-true
+true*)
 
 
 (* Divisione con tipo non numerico *)
@@ -124,7 +124,7 @@ let%test "test_div_ok_good_result" = test_exec_tx
 
 
 (* Divisione unita a una moltiplicazione *)
-let%test "test_div_mul_mix" = test_exec_tx
+let%test "test_div_mul_var" = test_exec_tx
   "contract C {
     int x=5;
     int y = 2;
@@ -133,3 +133,21 @@ let%test "test_div_mul_mix" = test_exec_tx
   }"
   ["0xA:0xC.f()"]
   [("x==1");]
+
+(* Espressione che dovrebbe essere semplificata *)
+let%test "test_mul_div_mix" = test_exec_tx
+  "contract C {
+    int x=1;
+    function f() public returns(int) { x = 9*(1/3); }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==3");]
+
+(* Espressione che dovrebbe essere semplificata *)
+let%test "test_div_mul_mix" = test_exec_tx
+  "contract C {
+    int x=1;
+    function f() public returns(int) { x = (1/3)*9; }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==3");]
