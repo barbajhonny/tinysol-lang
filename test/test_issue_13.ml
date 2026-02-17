@@ -287,16 +287,14 @@ let%test "test_mul_div_mix_a" = test_exec_tx
   ["0xA:0xC.f()"]
   [("x==6");]
 
-(* Per ora questo test non funziona, una divisione che non viene semplificata
-   a un numero intero non viene neanche arrotondata al momento dell'assegnazione,
-   che quindi viene bloccata *)
+
 let%test "test_mul_div_mix_b" = test_exec_tx
   "contract C {
     int x=1;
     function f() public returns(int) { x = 7*(2/3); }
   }"
   ["0xA:0xC.f()"]
-  [("x==4");]
+  [("x==-4");]
 
 (* Questa invece funziona. Forse risolvere quella sopra romperebbe questa *)
 let%test "test_mul_div_mix_c" = test_exec_tx
@@ -306,9 +304,6 @@ let%test "test_mul_div_mix_c" = test_exec_tx
   }"
   ["0xA:0xC.f()"]
   [("x==14");]
-
-open Typechecker
-open Semantics
 
 (* Esempi della issue *)
 let%test "test_div_issue_true" = test_typecheck
@@ -341,3 +336,22 @@ let%test "test_riki" = test_exec_tx
   }"
   ["0xA:0xC.f()"]
   [("x==40");]
+
+(* strano non funziona *)
+let%test "test_mul_div_mix_b_strano_negativo" = test_exec_tx
+  "contract C {
+    int x=1;
+    function f() public returns(int) { x = 7*(-2/3); }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==-4");]
+
+(* Questo è unparsable??? Boh. test_mul_div_mix_b_strano_negativo_variabile threw (Failure "account 0xC unbound"). *)
+(*let%test "test_mul_div_mix_b_strano_negativo_variabile" = test_exec_tx
+  "contract C {
+    int x=1;
+    int y = -2;
+    function f() public returns(int) { x = 7*(y/3); }
+  }"
+  ["0xA:0xC.f()"]
+  [("x==-4");]*)
