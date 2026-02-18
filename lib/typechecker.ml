@@ -188,9 +188,7 @@ let subtype t0 t1 = match t1 with
   | _ -> t0 = t1
 
 
-
-
-  (* Prova a ridurre un'espressione a una frazione (numeratore, denominatore) *)
+(* Prova a ridurre un'espressione a una frazione (numeratore, denominatore) *)
 let rec eval_const = function
   | IntConst n -> Some (n, 1)
   | Mul(e1, e2) -> 
@@ -201,14 +199,7 @@ let rec eval_const = function
       (match eval_const e1, eval_const e2 with
        | Some (n1, d1), Some (n2, d2) when n2 <> 0 -> Some (n1 * d2, d1 * n2)
        | _ -> None)
-  | Add(e1, e2) -> (* opzionale, per completezza *)
-      (match eval_const e1, eval_const e2 with
-       | Some (n1, d1), Some (n2, d2) -> Some (n1 * d2 + n2 * d1, d1 * d2)
-       | _ -> None)
   | _ -> None
-
-
-  
 
 
 let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
@@ -317,12 +308,6 @@ let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
             | Ok(t1), _ when not (subtype t1 IntET) -> Error [TypeError (f, e1, t1, IntET)]
             | _, Ok(t2) -> Error [TypeError (f, e2, t2, IntET)]
             | err1, err2 -> err1 >>+ err2))
-
-
-
-
-
-
 
 
   | Eq(e1,e2) ->
@@ -478,10 +463,11 @@ let rec typecheck_cmd (f : ide) (edl : enum_decl list) (vdl : all_var_decls) = f
           else if subtype (IntConstET (n/d)) tx then Ok() 
           else Error [TypeError (f, e, IntConstET (n/d), tx)]
 
-      (* Caso 2: L'espressione è costante ma la variabile x non esiste o ha errori *)
+      (* Caso 2: la prima espressione è una costante ma la variabile x non è dichiarata, 
+          possibili errori di scoping... *)
       | Some(_), Error errs -> Error errs
 
-      (* Caso 3: L'espressione non è costante (None), procediamo col typecheck standard *)
+      (* Caso 3: eval_const non ha prodotto risultati, procediamo col typecheck standard *)
       | None, _ -> 
           match typecheck_expr f edl vdl e, typecheck_expr f edl vdl (Var x) with
           | Ok(te), Ok(tx) -> if subtype te tx then Ok() else Error [TypeError (f,e,te,tx)]
