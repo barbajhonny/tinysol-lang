@@ -6,21 +6,21 @@ open Semantics
 let%test "test_div_ok" = test_typecheck
   "contract C {
     int x;
-    function f(int y) public returns(int) { x = y * ((1 / 3) * 6); }
+    function f(int y) public { x = y * ((1 / 3) * 6); }
   }"
 true
 
 let%test "test_constant_int_if_false" = test_typecheck
 "contract C {
       int x;
-      function f(int y) public returns(int) { x =  (2 / 3); }
+      function f(int y) public { x =  (2 / 3); }
 }"
 false
 
 let%test "test_constant_int_if_falseb" = test_typecheck
 "contract C {
       int x;
-      function f(int y) public returns(int) { x = y* (2 / 3); }
+      function f(int y) public { x = y* (2 / 3); }
 }"
 false
 
@@ -28,7 +28,7 @@ false
 let%test "test_div_0_times" = test_typecheck
   "contract C {
     int x;
-    function f(int y) public returns(int) { x = 2 * ((1 / 0) * 6); }
+    function f(int y) public { x = 2 * ((1 / 0) * 6); }
   }"
 false
 
@@ -37,7 +37,7 @@ false
 let%test "test_div_0" = test_typecheck
   "contract C {
     int x;
-    function f(int y) public returns(int) { x = (1 / 0); }
+    function f(int y) public { x = (1 / 0); }
   }"
 false
 
@@ -47,7 +47,7 @@ let%test "test_div_0_var" = test_typecheck
   "contract C {
     int x;
     int y = 2;
-    function f(int y) public returns(int) { x = (y / 0); }
+    function f(int y) public { x = (y / 0); }
   }"
 false
 
@@ -58,7 +58,7 @@ let%test "test_div_0_var_var" = test_typecheck
     int x;
     int y = 2;
     int z = 0;
-    function f(int y) public returns(int) { x = (y/ z); }
+    function f(int y) public { x = (y/ z); }
   }"
 true
 
@@ -68,7 +68,7 @@ let%test "test_div_ok_var_var" = test_typecheck
   "contract C {
     int x = 2;
     int y = 2;
-    function f(int y) public returns(int) { x = (y/x); }
+    function f(int y) public { x = (y/x); }
   }"
 true
 
@@ -77,7 +77,7 @@ true
 let%test "test_div_ok_const_const" = test_typecheck
   "contract C {
     int x=5;
-    function f() public returns(int) { x = (4/2); }
+    function f() public { x = (4/2); }
   }"
 true
 
@@ -87,7 +87,7 @@ let%test "test_constant_int_if_true3" = test_typecheck
       int x=2;
       int y = 2;
 int z =2;
-      function f(int y) public returns(int) { x = z* (y/ x); }
+      function f(int y) public { x = z* (y/ x); }
 }"
 true
 
@@ -97,7 +97,7 @@ true
       int x=5;
       int y = 2;
       int z= 4;
-      function f() public returns(int) { x = (4/2); }
+      function f() public { x = (4/2); }
 }"
 true
 (* ??? ma non esistono i float *)
@@ -107,7 +107,7 @@ true
     uint x= 5.98 * 100;
     int y = 2;
     int z= 4;
-    function f() public returns(int) { y = x/z; }
+    function f() public { y = x/z; }
   }"
 true*)
 
@@ -118,7 +118,7 @@ let%test "test_div_bool" = test_typecheck
     bool x;
     bool y = true;
     int z = 5;
-    function f(int y) public returns(int) { x = (y / z); }
+    function f(int y) public { x = (y / z); }
   }"
 false
 
@@ -129,7 +129,7 @@ false
    "contract C {
       uint x;
     
-      function f() public returns(int) { x = (-10/2); }
+      function f() public { x = (-10/2); }
 }"
 false
 
@@ -140,7 +140,7 @@ false
       int y=10;
       int z=2;
     
-      function f() public returns(int) { x = (-y/z); }
+      function f() public { x = (-y/z); }
 }"
 false
 
@@ -157,7 +157,7 @@ let%test "test_div_blocked_by_typechecker" = test_exec_tx
     int x=1;
     int y = 2;
     int z= 0;
-    function f() public returns(int) { x = (y/ z); }
+    function f() public { x = (y/ z); }
   }"
   ["0xA:0xC.f()"]
   [("x==1");]
@@ -166,7 +166,7 @@ let%test "test_div_blocked_by_typechecker" = test_exec_tx
 let%test "test_constant_int_if_false" = test_exec_tx
    "contract C {
       int x;
-      function f() public returns(int) { x = (-4/2); }
+      function f() public { x = (-4/2); }
 }"
 ["0xA:0xC.f()"]
   [("x==-2");]
@@ -177,7 +177,7 @@ let%test "test_constant_int_if_false" = test_exec_tx
       int x;
       int y = 2;
       int z= 4;
-      function f() public returns(int) { x = z*(y/z); }
+      function f() public { x = z*(y/z); }
 }"
 ["0xA:0xC.f()"]
   [("x==2");]
@@ -188,7 +188,7 @@ let%test "test_constant_int_if_false" = test_exec_tx
       int x;
       int y = 2;
       int z= 4;
-      function f() public returns(int) { x = y*(z/4); }
+      function f() public { x = y*(z/4); }
 }"
 ["0xA:0xC.f()"]
   [("x==2");]
@@ -199,7 +199,7 @@ let%test "test_constant_int_if_false" = test_exec_tx
       int x;
       int y = 9;
       int z= 2;
-      function f() public returns(int) { x = -z*(y/z); }
+      function f() public { x = -z*(y/z); }
 }"
 ["0xA:0xC.f()"]
   [("x==-9");]
@@ -210,7 +210,7 @@ let%test "test_constant_int_if_false" = test_exec_tx
       int x;
       int y = 9;
       int z= 2;
-      function f() public returns(int) { x = (-10/2); }
+      function f() public { x = (-10/2); }
 }"
 ["0xA:0xC.f()"]
   [("x==-5");]
@@ -222,7 +222,7 @@ let%test "test_constant_int_if_false" = test_exec_tx
       int x;
       int y = 9;
       int z= 2;
-      function f() public returns(int) { x = (-y*z); }
+      function f() public { x = (-y*z); }
 }"
 ["0xA:0xC.f()"]
   [("x==-18");]
@@ -243,7 +243,7 @@ let%test "test_div_ok_good_result" = test_exec_tx
     int x=5;
     int y = 2;
     int z= 4;
-    function f() public returns(int) { x = (4/2); }
+    function f() public { x = (4/2); }
   }"
   ["0xA:0xC.f()"]
   [("x==2");]
@@ -255,7 +255,7 @@ let%test "test_div_mul_var" = test_exec_tx
     int x=5;
     int y = 2;
     int z= 4;
-    function f() public returns(int) { x = y*(y/z); }
+    function f() public { x = y*(y/z); }
   }"
   ["0xA:0xC.f()"]
   [("x==1");]
@@ -264,7 +264,7 @@ let%test "test_div_mul_var" = test_exec_tx
 let%test "test_mul_div_mix" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = 9*(1/3); }
+    function f() public { x = 9*(1/3); }
   }"
   ["0xA:0xC.f()"]
   [("x==3");]
@@ -273,7 +273,7 @@ let%test "test_mul_div_mix" = test_exec_tx
 let%test "test_div_mul_mix" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = (1/3)*9; }
+    function f() public { x = (1/3)*9; }
   }"
   ["0xA:0xC.f()"]
   [("x==3");]
@@ -282,7 +282,7 @@ let%test "test_div_mul_mix" = test_exec_tx
 let%test "test_mul_div_mix_a" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = 9*(2/3); }
+    function f() public { x = 9*(2/3); }
   }"
   ["0xA:0xC.f()"]
   [("x==6");]
@@ -291,16 +291,16 @@ let%test "test_mul_div_mix_a" = test_exec_tx
 let%test "test_mul_div_mix_b" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = 7*(2/3); }
+    function f() public { x = 7*(2/3); }
   }"
   ["0xA:0xC.f()"]
-  [("x==-4");]
+  [("x==4");]
 
 (* Questa invece funziona. Forse risolvere quella sopra romperebbe questa *)
 let%test "test_mul_div_mix_c" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = 7*(2/3)*3; }
+    function f() public { x = 7*(2/3)*3; }
   }"
   ["0xA:0xC.f()"]
   [("x==14");]
@@ -324,7 +324,7 @@ let%test "test_div_ok_good_result" = test_exec_tx
     int x=111;
     int y = 2;
     int z= 4;
-    function f() public returns(int) { x = 2*(5/4)*2; }
+    function f() public { x = 2*(5/4)*2; }
   }"
   ["0xA:0xC.f()"]
   [("x==5");]
@@ -341,7 +341,7 @@ let%test "test_riki" = test_exec_tx
 let%test "test_mul_div_mix_b_strano_negativo" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = 7*(-2/3); }
+    function f() public { x = 7*(-2/3); }
   }"
   ["0xA:0xC.f()"]
   [("x==-4");]
@@ -349,7 +349,7 @@ let%test "test_mul_div_mix_b_strano_negativo" = test_exec_tx
 let%test "test_mul_div_mix_b_strano_negativo" = test_exec_tx
   "contract C {
     int x=1;
-    function f() public returns(int) { x = 7*((-2)/3); }
+    function f() public { x = 7*((-2)/3); }
   }"
   ["0xA:0xC.f()"]
   [("x==-4");]
@@ -359,7 +359,7 @@ let%test "test_mul_div_mix_b_strano_negativo" = test_exec_tx
   "contract C {
     int x=1;
     int y = -2;
-    function f() public returns(int) { x = 7*(y/3); }
+    function f() public { x = 7*(y/3); }
   }"
   ["0xA:0xC.f()"]
   [("x==-4");]*)
