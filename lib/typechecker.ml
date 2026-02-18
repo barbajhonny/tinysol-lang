@@ -276,7 +276,7 @@ let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
       (match eval_const (Mul(e1, e2)) with
        | Some (n, d) -> 
            (* Se è una costante, riduciamo. Il controllo del resto n mod d 
-              lo facciamo solo nell'Assign, per ora diamo il valore intero *)
+              lo facciamo nell'Assign*)
            Ok (IntConstET (n / d))
        | None -> 
            (* Logica standard per variabili o espressioni non costanti *)
@@ -286,8 +286,6 @@ let rec typecheck_expr (f : ide) (edl : enum_decl list) vdl = function
             | Ok(t1), _ when not (subtype t1 IntET) -> Error [TypeError (f, e1, t1, IntET)]
             | _, Ok(t2) -> Error [TypeError (f, e2, t2, IntET)]
             | err1, err2 -> err1 >>+ err2))
-
-
 
 (*RIPRENDO DA QUI:*)
   | Div(e1, e2) ->
