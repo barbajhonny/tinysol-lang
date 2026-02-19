@@ -199,6 +199,14 @@ let rec eval_const = function
       (match eval_const e1, eval_const e2 with
        | Some (n1, d1), Some (n2, d2) when n2 <> 0 -> Some (n1 * d2, d1 * n2)
        | _ -> None)
+  | Add(e1, e2) ->
+      (match eval_const e1, eval_const e2 with
+       | Some (n1, d1), Some (n2, d2) -> Some (n1 * d2 + n2 * d1, d1 * d2)
+       | _ -> None)
+  | Sub(e1, e2) ->
+      (match eval_const e1, eval_const e2 with
+       | Some (n1, d1), Some (n2, d2) -> Some (n1 * d2 - n2 * d1, d1 * d2)
+       | _ -> None)
   | _ -> None
 
 
